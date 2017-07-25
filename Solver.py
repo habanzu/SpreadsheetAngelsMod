@@ -1,6 +1,6 @@
 import math
 
-from Recipes import Building
+from Recipes import Building, RecipeReader
 
 
 def demo(e, f, g):
@@ -21,5 +21,7 @@ if __name__ == '__main__':
     #a = int(input("a "))
     #b = int(input("b "))
     #c = int(input("c "))
-    uiae = Building("")
     #demo(a, b, c)
+    r = RecipeReader(r"C:\Users\haban\Documents\PythonProjects\SpreadsheetAngelsMod\petrochem-basics.txt")
+    r.create_recipes()
+    pass
