@@ -7,25 +7,32 @@ from DataReader import DataReader
 
 
 class RecipeReader(DataReader):
-    resource_pattern = (r'(?:\{\s*'
+    """The Patterns contain the RegEx to match Recipes. Every RecipeReader needs a path for construction.
+       create_recipes is the appropiate function
+       to create a list of recipes from a text file. _create_resources is used in create_recipes"""
+
+    resource_pattern = (r'(?P<resource_group>\{\s*'
                         r'type[^"]*"(?P<type>[^"]*)'
                         r'\W*name[^"]*"(?P<resource_name>[^"]*)'
                         r'\W*amount\D*(?P<amount>\d*)'
                         r'[^}]*'
                         r'\s*\})')
+    resource_dummy = (
+                      r'(?:\{[^{}]+\})'
+                      )
     ingredients_pattern = (r'ingredients[^{]*'
-                          r'(?P<ingredients>\{'
-                          r'(?:[^{}]*') + resource_pattern + \
-                         (r'[^{}]*)+'
-                          r'\})')
+                           r'(?P<ingredients>\{'
+                           r'(?:[^{}]*') + resource_dummy + \
+                          (r'[^{}]*)+'
+                           r'\})')
     results_pattern = (r'results[^{]*'
                        r'(?P<results>\{'
-                       r'(?:[^{}]*') + resource_pattern + \
-                      (r'[^{}]*)+'
+                       r'(?:[^{}]*' + resource_dummy +
+                       r'[^{}]*)+'
                        r'\})')
     recipe_pattern = (r'type.*?"recipe"'
-                      r'.*?name[^"]+?"(?P<name>[^"]+?)"'
-                      r'[^{}]*') + ingredients_pattern + '\W*' + results_pattern + r'.*?icon'
+                      r'.*?name[^"]+"(?P<name>[^"]+)"'
+                      r'[^{}]*?(?=ingredients)') + ingredients_pattern + '[^r]*' + results_pattern
 
     def __init__(self, path):
         super().__init__(path)
@@ -38,9 +45,10 @@ class RecipeReader(DataReader):
             placeholder = Building("Placeholder")
             recipe = Recipe(name, placeholder, "placeholder")
             self.create_resources(recipe, entry.group('ingredients'))
+            self.create_resources(recipe, entry.group('results'))
             recipes.append(recipe)
             # print(entry.group("ingredients"))
-        print("\n".join(map(str, recipes)))
+        # print("\n".join(map(str, recipes)))
         return recipes
 
     def create_resources(self, recipe, text):
@@ -68,6 +76,7 @@ class Recipe(object):
     def __str__(self):
         l = [self.name]
         l.extend(map(str, self.educts.keys()))
+        l.extend(map(str, self.products.keys()))
         return ", ".join(l)
 
     def number_of_resources(self):
