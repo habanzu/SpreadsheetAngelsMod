@@ -1,5 +1,7 @@
 import math
+import openpyxl
 
+import RecipeWriter
 from Recipes import Building, RecipeReader
 
 
@@ -23,5 +25,12 @@ if __name__ == '__main__':
     #c = int(input("c "))
     #demo(a, b, c)
     r = RecipeReader(r"C:\Users\haban\Documents\PythonProjects\SpreadsheetAngelsMod\petrochem-basics.txt")
-    r.create_recipes()
-    pass
+    # r.create_recipes()
+    # wb = openpyxl.load_workbook('AngelsTest.xlsx')
+    # wb.create_sheet(title='Noob')
+    # print(wb.active)
+    # print(wb.get_sheet_names())
+    d = RecipeWriter.RecipeWriter('AngelsTest.xlsx')
+    d.write_recipes(r.create_recipes())
+    d.save_changes()
+

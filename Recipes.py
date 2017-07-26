@@ -1,6 +1,8 @@
 from enum import Enum
 import re
 
+from copy import copy
+
 from DataReader import DataReader
 
 """type.*?"recipe".*?name.*?"(P<name>.*?)".*?icon"""
@@ -44,20 +46,23 @@ class RecipeReader(DataReader):
             name = entry.group('name')
             placeholder = Building("Placeholder")
             recipe = Recipe(name, placeholder, "placeholder")
-            self.create_resources(recipe, entry.group('ingredients'))
-            self.create_resources(recipe, entry.group('results'))
+            self.create_resources(recipe, entry.group('ingredients'), educt=True)
+            self.create_resources(recipe, entry.group('results'), educt=False)
             recipes.append(recipe)
             # print(entry.group("ingredients"))
         # print("\n".join(map(str, recipes)))
         return recipes
 
-    def create_resources(self, recipe, text):
+    def create_resources(self, recipe, text, educt = False):
         ingredients_iter = re.finditer(self.resource_pattern, text, re.DOTALL)
         for ingredient in ingredients_iter:
             if not ingredient.group('type') == "fluid":
                 continue
             resource = Resource(ingredient.group('resource_name'), ResourceType.FLUID)
-            recipe.add_educt(resource, ingredient.group("amount"))
+            if educt:
+                recipe.add_educt(resource, ingredient.group("amount"))
+            else:
+                recipe.add_product(resource, ingredient.group("amount"))
 
 
 class Recipe(object):
@@ -81,6 +86,11 @@ class Recipe(object):
 
     def number_of_resources(self):
         return len(self.products) + len(self.educts)
+
+    def get_resources(self):
+        l = copy(self.educts)
+        l.update(self.products)
+        return l
 
     def add_educt(self, educt, count):
         self.educts.update({educt: count})
