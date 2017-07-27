@@ -1,68 +1,5 @@
-from enum import Enum
-import re
-
 from copy import copy
-
-from DataReader import DataReader
-
-"""type.*?"recipe".*?name.*?"(P<name>.*?)".*?icon"""
-
-
-class RecipeReader(DataReader):
-    """The Patterns contain the RegEx to match Recipes. Every RecipeReader needs a path for construction.
-       create_recipes is the appropiate function
-       to create a list of recipes from a text file. _create_resources is used in create_recipes"""
-
-    resource_pattern = (r'(?P<resource_group>\{\s*'
-                        r'type[^"]*"(?P<type>[^"]*)'
-                        r'\W*name[^"]*"(?P<resource_name>[^"]*)'
-                        r'\W*amount\D*(?P<amount>\d*)'
-                        r'[^}]*'
-                        r'\s*\})')
-    resource_dummy = (
-                      r'(?:\{[^{}]+\})'
-                      )
-    ingredients_pattern = (r'ingredients[^{]*'
-                           r'(?P<ingredients>\{'
-                           r'(?:[^{}]*') + resource_dummy + \
-                          (r'[^{}]*)+'
-                           r'\})')
-    results_pattern = (r'results[^{]*'
-                       r'(?P<results>\{'
-                       r'(?:[^{}]*' + resource_dummy +
-                       r'[^{}]*)+'
-                       r'\})')
-    recipe_pattern = (r'type.*?"recipe"'
-                      r'.*?name[^"]+"(?P<name>[^"]+)"'
-                      r'[^{}]*?(?=ingredients)') + ingredients_pattern + '[^r]*' + results_pattern
-
-    def __init__(self, path):
-        super().__init__(path)
-
-    def create_recipes(self):
-        recipes = []
-        recipe_iter = re.finditer(self.recipe_pattern, self.content, re.DOTALL)
-        for entry in recipe_iter:
-            name = entry.group('name')
-            placeholder = Building("Placeholder")
-            recipe = Recipe(name, placeholder, "placeholder")
-            self.create_resources(recipe, entry.group('ingredients'), educt=True)
-            self.create_resources(recipe, entry.group('results'), educt=False)
-            recipes.append(recipe)
-            # print(entry.group("ingredients"))
-        # print("\n".join(map(str, recipes)))
-        return recipes
-
-    def create_resources(self, recipe, text, educt = False):
-        ingredients_iter = re.finditer(self.resource_pattern, text, re.DOTALL)
-        for ingredient in ingredients_iter:
-            if not ingredient.group('type') == "fluid":
-                continue
-            resource = Resource(ingredient.group('resource_name'), ResourceType.FLUID)
-            if educt:
-                recipe.add_educt(resource, ingredient.group("amount"))
-            else:
-                recipe.add_product(resource, ingredient.group("amount"))
+from enum import Enum
 
 
 class Recipe(object):
@@ -97,6 +34,12 @@ class Recipe(object):
 
     def add_product(self, product, count):
         self.products.update({product: count})
+
+    def remove_resource(self, resource):
+        if resource in self.educts:
+            self.educts.pop(resource)
+        elif resource in self.products:
+            self.products.pop(resource)
 
 
 class Building(object):

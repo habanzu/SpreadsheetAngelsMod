@@ -1,7 +1,7 @@
 import unittest
 
 from test_building import TestBuilding
-from Solver import demo
+from Main import demo
 
 '''def suite():
     suite = unittest.TestSuite()
